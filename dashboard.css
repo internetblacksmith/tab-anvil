@@ -357,6 +357,32 @@ kbd {
   color: var(--text-secondary);
 }
 
+/* ── Window header row ─────────────────────────────────── */
+.window-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px 4px;
+  height: var(--group-header-height);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-top: 1px solid var(--bg-tertiary);
+  user-select: none;
+}
+
+.window-header-row:first-child { border-top: none; }
+
+.window-icon {
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.window-label {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
 /* ── Floating action bar ───────────────────────────────── */
 .action-bar {
   position: fixed;

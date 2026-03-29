@@ -191,10 +191,17 @@
       let currentWindowId = null;
 
       for (const tab of sorted) {
-        // Window separator (only if multiple windows)
-        if (allWindows.size > 1 && tab.windowId !== currentWindowId) {
+        // Window header (always shown, even with one window)
+        if (tab.windowId !== currentWindowId) {
           currentWindowId = tab.windowId;
           currentGroupId = null;
+          const windowIndex = [...allWindows.keys()].indexOf(tab.windowId) + 1;
+          const windowTabs = sorted.filter(t => t.windowId === tab.windowId);
+          rows.push({
+            type: "window-header",
+            data: { windowId: tab.windowId, windowIndex, tabCount: windowTabs.length },
+            height: GROUP_HEADER_HEIGHT
+          });
         }
 
         // Group header
@@ -288,7 +295,9 @@
 
     for (let i = bufferedStart; i <= bufferedEnd; i++) {
       const row = displayRows[i];
-      if (row.type === "group-header") {
+      if (row.type === "window-header") {
+        fragment.appendChild(createWindowHeaderEl(row.data, i));
+      } else if (row.type === "group-header") {
         fragment.appendChild(createGroupHeaderEl(row.data, i));
       } else {
         fragment.appendChild(createTabRowEl(row.data, i));
@@ -349,8 +358,8 @@
     domain.textContent = getDomain(tab.url);
     el.appendChild(domain);
 
-    // Window badge (only if multiple windows)
-    if (allWindows.size > 1) {
+    // Window badge (only when not in position sort, since window headers handle it)
+    if (allWindows.size > 1 && activeSort !== "position") {
       const wBadge = document.createElement("span");
       wBadge.className = "tab-window-badge";
       wBadge.textContent = `W${[...allWindows.keys()].indexOf(tab.windowId) + 1}`;
@@ -410,6 +419,30 @@
       }
       rebuildDisplay();
     });
+
+    return el;
+  }
+
+  function createWindowHeaderEl(win, rowIndex) {
+    const el = document.createElement("div");
+    el.className = "window-header-row";
+    el.dataset.windowId = win.windowId;
+    el.dataset.rowIndex = rowIndex;
+
+    const icon = document.createElement("span");
+    icon.className = "window-icon";
+    icon.textContent = "\u25A1";
+    el.appendChild(icon);
+
+    const name = document.createElement("span");
+    name.className = "window-label";
+    name.textContent = `Window ${win.windowIndex}`;
+    el.appendChild(name);
+
+    const count = document.createElement("span");
+    count.className = "group-header-count";
+    count.textContent = `(${win.tabCount} tabs)`;
+    el.appendChild(count);
 
     return el;
   }
