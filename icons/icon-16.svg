@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Anvil shape -->
+  <path d="M3 4h10l1 3H2L3 4z" fill="#0060DF"/>
+  <rect x="5" y="7" width="6" height="4" rx="0.5" fill="#0060DF"/>
+  <rect x="3" y="11" width="10" height="2" rx="0.5" fill="#42414D"/>
+  <!-- Tab lines -->
+  <line x1="5" y1="5" x2="11" y2="5" stroke="#FBFBFE" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="6" y1="6.5" x2="10" y2="6.5" stroke="#FBFBFE" stroke-width="0.6" stroke-linecap="round" opacity="0.7"/>
+</svg>

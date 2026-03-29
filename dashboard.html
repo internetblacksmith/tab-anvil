@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabAnvil</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- Sidebar: groups + keyboard hints -->
+  <aside class="sidebar" id="sidebar">
+    <h2 class="sidebar-heading">Groups</h2>
+    <div class="group-list" id="group-list"></div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-heading">Keyboard</div>
+      <div class="kbd-hints">
+        <span><kbd>/</kbd> Search</span>
+        <span><kbd>j</kbd><kbd>k</kbd> Navigate</span>
+        <span><kbd>x</kbd> Select</span>
+        <span><kbd>d</kbd> Close</span>
+        <span><kbd>g</kbd> Group</span>
+        <span><kbd>Esc</kbd> Deselect</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <!-- Search bar -->
+    <div class="search-bar">
+      <input
+        class="search-input"
+        id="search-input"
+        type="text"
+        placeholder="Search tabs by title or URL...   /"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <div class="chips" id="filter-chips">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="grouped">Grouped</button>
+        <button class="chip" data-filter="ungrouped">Ungrouped</button>
+        <button class="chip" data-filter="duplicates">Duplicates</button>
+      </div>
+    </div>
+
+    <!-- Sort bar -->
+    <div class="sort-bar">
+      <span class="sort-label">Sort:</span>
+      <button class="sort-option active" data-sort="position">Position</button>
+      <button class="sort-option" data-sort="domain">Domain</button>
+      <button class="sort-option" data-sort="title">Title</button>
+      <button class="sort-option" data-sort="lastAccessed">Last Accessed</button>
+      <span class="tab-count" id="tab-count"></span>
+    </div>
+
+    <!-- Virtualized tab list -->
+    <div class="tab-list" id="tab-list">
+      <div class="tab-list-spacer" id="tab-list-spacer"></div>
+      <div class="tab-list-viewport" id="tab-list-viewport"></div>
+    </div>
+
+    <!-- Floating action bar (visible when tabs selected) -->
+    <div class="action-bar hidden" id="action-bar">
+      <span class="action-count" id="action-count"></span>
+      <button class="action-btn primary" id="action-group">Group</button>
+      <button class="action-btn" id="action-move">Move to...</button>
+      <button class="action-btn danger" id="action-close">Close</button>
+      <span class="action-hint"><kbd>Esc</kbd> deselect</span>
+    </div>
+  </main>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

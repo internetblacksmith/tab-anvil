@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "TabAnvil",
+  "version": "0.1.0",
+  "description": "Full-page tab manager for 100+ tabs — search, sort, group, and wrangle your tabs with native Firefox grouping.",
+  "permissions": [
+    "tabs",
+    "tabGroups"
+  ],
+  "action": {
+    "default_title": "Open TabAnvil Dashboard",
+    "default_icon": {
+      "16": "icons/icon-16.svg",
+      "32": "icons/icon-32.svg",
+      "48": "icons/icon-48.svg"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon-16.svg",
+    "32": "icons/icon-32.svg",
+    "48": "icons/icon-48.svg",
+    "128": "icons/icon-128.svg"
+  }
+}
