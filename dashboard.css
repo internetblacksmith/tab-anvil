@@ -362,7 +362,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px 4px;
+  padding: 6px 16px 4px 24px;
   height: var(--group-header-height);
   font-size: 12px;
   font-weight: 700;
@@ -372,11 +372,6 @@ kbd {
 }
 
 .window-header-row:first-child { border-top: none; }
-
-.window-icon {
-  font-size: 13px;
-  color: var(--accent);
-}
 
 .window-label {
   font-size: 12px;

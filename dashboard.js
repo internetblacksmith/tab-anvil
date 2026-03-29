@@ -429,11 +429,6 @@
     el.dataset.windowId = win.windowId;
     el.dataset.rowIndex = rowIndex;
 
-    const icon = document.createElement("span");
-    icon.className = "window-icon";
-    icon.textContent = "\u25A1";
-    el.appendChild(icon);
-
     const name = document.createElement("span");
     name.className = "window-label";
     name.textContent = `Window ${win.windowIndex}`;
