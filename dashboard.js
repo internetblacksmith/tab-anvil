@@ -429,6 +429,18 @@
     el.dataset.windowId = win.windowId;
     el.dataset.rowIndex = rowIndex;
 
+    const icon = document.createElement("span");
+    icon.className = "window-icon";
+    // SVG window icon: title bar with three dots + frame
+    icon.innerHTML = '<svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="0.5" y="0.5" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1"/>' +
+      '<line x1="0.5" y1="3.5" x2="13.5" y2="3.5" stroke="currentColor" stroke-width="1"/>' +
+      '<circle cx="3" cy="2" r="0.7" fill="currentColor"/>' +
+      '<circle cx="5" cy="2" r="0.7" fill="currentColor"/>' +
+      '<circle cx="7" cy="2" r="0.7" fill="currentColor"/>' +
+      '</svg>';
+    el.appendChild(icon);
+
     const name = document.createElement("span");
     name.className = "window-label";
     name.textContent = `Window ${win.windowIndex}`;

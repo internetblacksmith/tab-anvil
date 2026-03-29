@@ -373,6 +373,12 @@ kbd {
 
 .window-header-row:first-child { border-top: none; }
 
+.window-icon {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+}
+
 .window-label {
   font-size: 12px;
   letter-spacing: 0.3px;
