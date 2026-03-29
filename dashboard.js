@@ -68,7 +68,8 @@
       await loadGroups();
       rebuildDisplay();
     } catch (err) {
-      showToast(`Failed to load tabs: ${err.message}`, true);
+      console.error("Failed to load tabs:", err);
+      showToast("Failed to load tabs", true);
     }
   }
 
@@ -313,7 +314,10 @@
     el.appendChild(checkbox);
 
     // Favicon
-    if (tab.favIconUrl && !tab.favIconUrl.startsWith("chrome://")) {
+    const safeFavicon = tab.favIconUrl
+      && /^https?:\/\//.test(tab.favIconUrl);
+
+    if (safeFavicon) {
       const img = document.createElement("img");
       img.className = "tab-favicon";
       img.src = tab.favIconUrl;
@@ -474,7 +478,8 @@
       await browser.tabs.update(tabId, { active: true });
       await browser.windows.update(windowId, { focused: true });
     } catch (err) {
-      showToast(`Failed to switch to tab: ${err.message}`, true);
+      console.error("Failed to switch to tab:", err);
+      showToast("Failed to switch to tab", true);
     }
   }
 
@@ -482,7 +487,8 @@
     try {
       await browser.tabs.remove(tabId);
     } catch (err) {
-      showToast(`Failed to close tab: ${err.message}`, true);
+      console.error("Failed to close tab:", err);
+      showToast("Failed to close tab", true);
     }
   }
 
@@ -493,7 +499,8 @@
       selectedIds.clear();
       showToast(`Closed ${ids.length} tab${ids.length > 1 ? "s" : ""}`);
     } catch (err) {
-      showToast(`Failed to close some tabs: ${err.message}`, true);
+      console.error("Failed to close some tabs:", err);
+      showToast("Failed to close some tabs", true);
     }
   }
 
@@ -534,7 +541,8 @@
       selectedIds.clear();
       showToast(`Grouped ${tabIds.length} tabs into "${title}"`);
     } catch (err) {
-      showToast(`Failed to group tabs: ${err.message}`, true);
+      console.error("Failed to group tabs:", err);
+      showToast("Failed to group tabs", true);
     }
   }
 
@@ -554,7 +562,8 @@
       }
       selectedIds.clear();
     } catch (err) {
-      showToast(`Failed to move tabs: ${err.message}`, true);
+      console.error("Failed to move tabs:", err);
+      showToast("Failed to move tabs", true);
     }
   }
 
@@ -779,7 +788,15 @@
         case "updated": {
           const tab = allTabs.find(t => t.id === evt.tabId);
           if (tab && evt.changeInfo) {
-            Object.assign(tab, evt.changeInfo);
+            const ci = evt.changeInfo;
+            if (ci.title !== undefined) tab.title = ci.title;
+            if (ci.url !== undefined) tab.url = ci.url;
+            if (ci.favIconUrl !== undefined) tab.favIconUrl = ci.favIconUrl;
+            if (ci.status !== undefined) tab.status = ci.status;
+            if (ci.pinned !== undefined) tab.pinned = ci.pinned;
+            if (ci.active !== undefined) tab.active = ci.active;
+            if (ci.groupId !== undefined) tab.groupId = ci.groupId;
+            if (ci.discarded !== undefined) tab.discarded = ci.discarded;
           }
           break;
         }
@@ -811,9 +828,11 @@
       coalesceEvent("moved", tabId);
     });
 
-    browser.tabs.onActivated.addListener(({ tabId }) => {
-      // Update active state locally without full re-query
-      for (const t of allTabs) t.active = (t.id === tabId);
+    browser.tabs.onActivated.addListener(({ tabId, windowId }) => {
+      // Update active state only within the same window
+      for (const t of allTabs) {
+        if (t.windowId === windowId) t.active = (t.id === tabId);
+      }
       renderVisibleRows();
     });
 
