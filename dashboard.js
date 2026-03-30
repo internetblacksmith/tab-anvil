@@ -713,6 +713,8 @@
     input.placeholder = `Window ${windowIndex}`;
     nameEl.replaceWith(input);
 
+    input.addEventListener("click", (e) => e.stopPropagation());
+
     requestAnimationFrame(() => {
       input.focus();
       input.select();
