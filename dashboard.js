@@ -586,7 +586,9 @@
     if (allWindows.size > 1 && flattenWindows) {
       const wBadge = document.createElement("span");
       wBadge.className = "tab-window-badge";
-      wBadge.textContent = `W${[...allWindows.keys()].indexOf(tab.windowId) + 1}`;
+      const wIdx = [...allWindows.keys()].indexOf(tab.windowId) + 1;
+      const wName = windowNames.get(tab.windowId);
+      wBadge.textContent = wName || `W${wIdx}`;
       el.appendChild(wBadge);
     }
 
@@ -1470,10 +1472,11 @@
     // Existing windows
     let idx = 1;
     for (const [windowId] of allWindows) {
+      const windowIndex = idx;
       const windowTabs = allTabs.filter(t => t.windowId === windowId);
       const btn = document.createElement("button");
       btn.className = "move-dropdown-item";
-      btn.textContent = `Window ${idx} (${windowTabs.length} tabs)`;
+      btn.textContent = `${getWindowLabel(windowId, windowIndex)} (${windowTabs.length} tabs)`;
       btn.addEventListener("click", () => {
         dropdown.remove();
         moveTabsToWindow([...selectedIds], windowId);
