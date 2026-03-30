@@ -465,7 +465,7 @@
     for (const [gid, group] of allGroups) {
       const count = allTabs.filter(t => t.groupId === gid).length;
       if (count === 0) continue;
-      const item = createGroupSidebarItem(gid, group.title || "Unnamed", GROUP_COLOR_HEX[group.color], count);
+      const item = createGroupSidebarItem(gid, group.title || "Unnamed", GROUP_COLOR_HEX[group.color], count, group.color);
       if (activeGroupFilter === gid) item.classList.add("active");
       fragment.appendChild(item);
     }
@@ -481,7 +481,7 @@
     groupListEl.replaceChildren(fragment);
   }
 
-  function createGroupSidebarItem(id, label, color, count) {
+  function createGroupSidebarItem(id, label, color, count, colorName) {
     const btn = document.createElement("button");
     btn.className = "group-item";
     btn.dataset.groupFilter = id;
@@ -491,8 +491,25 @@
     dot.style.background = color || "#0060DF";
     btn.appendChild(dot);
 
-    const text = document.createTextNode(label);
+    const text = document.createElement("span");
+    text.className = "group-item-label";
+    text.textContent = label;
     btn.appendChild(text);
+
+    // Edit button for real groups (not "all" or "ungrouped")
+    if (typeof id === "number") {
+      const editBtn = document.createElement("span");
+      editBtn.className = "group-edit-btn";
+      editBtn.title = "Rename group";
+      editBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M7.5 1.5L9.5 3.5M1 10L1.5 7.5L8.5 0.5L10.5 2.5L3.5 9.5L1 10Z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>';
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        showEditGroupModal(id, label, colorName || "grey");
+      });
+      btn.appendChild(editBtn);
+    }
 
     const countEl = document.createElement("span");
     countEl.className = "group-count";
@@ -959,6 +976,93 @@
     requestAnimationFrame(() => input.focus());
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") confirm.click();
+      if (e.key === "Escape") overlay.remove();
+    });
+  }
+
+  // ── Edit Group Modal ───────────────────────────────────
+
+  function showEditGroupModal(groupId, currentTitle, currentColor) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "modal";
+
+    const h3 = document.createElement("h3");
+    h3.textContent = "Edit Group";
+    modal.appendChild(h3);
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = currentTitle || "";
+    input.placeholder = "Group name...";
+    modal.appendChild(input);
+
+    // Color picker
+    const colors = document.createElement("div");
+    colors.className = "modal-colors";
+    let selectedColor = currentColor || "grey";
+
+    for (const color of GROUP_COLORS) {
+      const swatch = document.createElement("div");
+      swatch.className = `modal-color${color === selectedColor ? " selected" : ""}`;
+      swatch.style.background = GROUP_COLOR_HEX[color];
+      swatch.dataset.color = color;
+      swatch.addEventListener("click", () => {
+        colors.querySelectorAll(".modal-color").forEach(s => s.classList.remove("selected"));
+        swatch.classList.add("selected");
+        selectedColor = color;
+      });
+      colors.appendChild(swatch);
+    }
+    modal.appendChild(colors);
+
+    // Actions
+    const actions = document.createElement("div");
+    actions.className = "modal-actions";
+
+    const cancel = document.createElement("button");
+    cancel.textContent = "Cancel";
+    cancel.addEventListener("click", () => overlay.remove());
+    actions.appendChild(cancel);
+
+    const save = document.createElement("button");
+    save.className = "primary";
+    save.textContent = "Save";
+    save.addEventListener("click", async () => {
+      const newTitle = input.value.trim();
+      overlay.remove();
+      try {
+        await browser.tabGroups.update(groupId, {
+          title: newTitle || "",
+          color: selectedColor
+        });
+        await loadAllTabs();
+        showToast(`Group renamed to "${newTitle || "Unnamed"}"`);
+      } catch (err) {
+        console.error("Failed to update group:", err);
+        showToast("Failed to update group", true);
+      }
+    });
+    actions.appendChild(save);
+
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      input.focus();
+      input.select();
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") save.click();
       if (e.key === "Escape") overlay.remove();
     });
   }

@@ -70,11 +70,36 @@ body {
   flex-shrink: 0;
 }
 
+.group-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+
+.group-item:hover .group-edit-btn { opacity: 1; }
+.group-edit-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
 .group-count {
-  margin-left: auto;
   font-size: 11px;
   color: var(--text-secondary);
   font-family: monospace;
+  flex-shrink: 0;
 }
 
 .sidebar-footer {
