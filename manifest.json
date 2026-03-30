@@ -5,8 +5,7 @@
   "description": "Full-page tab manager for 100+ tabs — search, sort, group, and wrangle your tabs with native Firefox grouping.",
   "permissions": [
     "tabs",
-    "tabGroups",
-    "storage"
+    "tabGroups"
   ],
   "action": {
     "default_title": "Open TabAnvil Dashboard",

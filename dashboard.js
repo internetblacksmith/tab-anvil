@@ -69,7 +69,7 @@
       allWindows = new Map(windows.map(w => [w.id, w]));
 
       await loadGroups();
-      await loadWindowNames();
+      loadWindowNames();
       // Clean up names for windows that no longer exist
       for (const wid of windowNames.keys()) {
         if (!allWindows.has(wid)) windowNames.delete(wid);
@@ -95,21 +95,20 @@
     }
   }
 
-  async function loadWindowNames() {
+  function loadWindowNames() {
     try {
-      const data = await browser.storage.local.get("windowNames");
-      if (data.windowNames) {
-        windowNames = new Map(Object.entries(data.windowNames).map(([k, v]) => [Number(k), v]));
+      const stored = localStorage.getItem("tabAnvilWindowNames");
+      if (stored) {
+        windowNames = new Map(Object.entries(JSON.parse(stored)).map(([k, v]) => [Number(k), v]));
       }
     } catch {
       // storage unavailable
     }
   }
 
-  async function saveWindowNames() {
+  function saveWindowNames() {
     try {
-      const obj = Object.fromEntries(windowNames);
-      await browser.storage.local.set({ windowNames: obj });
+      localStorage.setItem("tabAnvilWindowNames", JSON.stringify(Object.fromEntries(windowNames)));
     } catch (err) {
       console.error("Failed to save window names:", err);
     }
@@ -731,14 +730,14 @@
       input.select();
     });
 
-    async function commit() {
+    function commit() {
       const newName = input.value.trim();
       if (newName) {
         windowNames.set(windowId, newName);
       } else {
         windowNames.delete(windowId);
       }
-      await saveWindowNames();
+      saveWindowNames();
       rebuildDisplay();
     }
 
