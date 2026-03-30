@@ -731,14 +731,14 @@
       input.select();
     });
 
-    function commit() {
+    async function commit() {
       const newName = input.value.trim();
       if (newName) {
         windowNames.set(windowId, newName);
       } else {
         windowNames.delete(windowId);
       }
-      saveWindowNames();
+      await saveWindowNames();
       rebuildDisplay();
     }
 
