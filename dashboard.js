@@ -184,27 +184,26 @@
     const sorted = getSortedTabs(filtered);
     const rows = [];
 
-    // Group tabs by their groupId (and window)
-    if (activeSort === "position" && !searchQuery && activeFilter !== "duplicates") {
-      // Show group headers when in position sort with no search
-      let currentGroupId = null;
-      let currentWindowId = null;
+    const showGroupHeaders = activeSort === "position" && !searchQuery && activeFilter !== "duplicates";
+    let currentGroupId = null;
+    let currentWindowId = null;
 
-      for (const tab of sorted) {
-        // Window header (always shown, even with one window)
-        if (tab.windowId !== currentWindowId) {
-          currentWindowId = tab.windowId;
-          currentGroupId = null;
-          const windowIndex = [...allWindows.keys()].indexOf(tab.windowId) + 1;
-          const windowTabs = sorted.filter(t => t.windowId === tab.windowId);
-          rows.push({
-            type: "window-header",
-            data: { windowId: tab.windowId, windowIndex, tabCount: windowTabs.length },
-            height: GROUP_HEADER_HEIGHT
-          });
-        }
+    for (const tab of sorted) {
+      // Window header
+      if (tab.windowId !== currentWindowId) {
+        currentWindowId = tab.windowId;
+        currentGroupId = null;
+        const windowIndex = [...allWindows.keys()].indexOf(tab.windowId) + 1;
+        const windowTabs = sorted.filter(t => t.windowId === tab.windowId);
+        rows.push({
+          type: "window-header",
+          data: { windowId: tab.windowId, windowIndex, tabCount: windowTabs.length },
+          height: GROUP_HEADER_HEIGHT
+        });
+      }
 
-        // Group header
+      // Group headers only in position sort without search
+      if (showGroupHeaders) {
         const gid = (tab.groupId && tab.groupId !== -1) ? tab.groupId : null;
         if (gid !== currentGroupId) {
           currentGroupId = gid;
@@ -221,14 +220,9 @@
 
         // Skip tabs in collapsed groups
         if (gid && collapsedGroups.has(gid)) continue;
+      }
 
-        rows.push({ type: "tab", data: tab, height: ROW_HEIGHT });
-      }
-    } else {
-      // Flat list (sorted/filtered modes)
-      for (const tab of sorted) {
-        rows.push({ type: "tab", data: tab, height: ROW_HEIGHT });
-      }
+      rows.push({ type: "tab", data: tab, height: ROW_HEIGHT });
     }
 
     displayRows = rows;
