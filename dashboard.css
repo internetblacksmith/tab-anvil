@@ -423,6 +423,35 @@ kbd {
   letter-spacing: 0.3px;
 }
 
+.window-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+
+.window-header-row:hover .window-edit-btn { opacity: 1; }
+.window-edit-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+.window-rename-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+  width: 140px;
+}
+
 /* ── Floating action bar ───────────────────────────────── */
 .action-bar {
   position: fixed;

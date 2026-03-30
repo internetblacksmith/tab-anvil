@@ -36,6 +36,7 @@
   let activeGroupFilter = null; // null = all, groupId or "ungrouped"
   let collapsedGroups = new Set();
   let flattenWindows = false; // "All windows" checkbox
+  let windowNames = new Map(); // windowId -> custom name
 
   // Debounce/coalesce state
   let searchTimer = null;
@@ -67,6 +68,11 @@
       allWindows = new Map(windows.map(w => [w.id, w]));
 
       await loadGroups();
+      await loadWindowNames();
+      // Clean up names for windows that no longer exist
+      for (const wid of windowNames.keys()) {
+        if (!allWindows.has(wid)) windowNames.delete(wid);
+      }
       rebuildDisplay();
     } catch (err) {
       console.error("Failed to load tabs:", err);
@@ -86,6 +92,30 @@
     } catch {
       // tabGroups API unavailable, proceed without native groups
     }
+  }
+
+  async function loadWindowNames() {
+    try {
+      const data = await browser.storage.local.get("windowNames");
+      if (data.windowNames) {
+        windowNames = new Map(Object.entries(data.windowNames).map(([k, v]) => [Number(k), v]));
+      }
+    } catch {
+      // storage unavailable
+    }
+  }
+
+  async function saveWindowNames() {
+    try {
+      const obj = Object.fromEntries(windowNames);
+      await browser.storage.local.set({ windowNames: obj });
+    } catch (err) {
+      console.error("Failed to save window names:", err);
+    }
+  }
+
+  function getWindowLabel(windowId, windowIndex) {
+    return windowNames.get(windowId) || `Window ${windowIndex}`;
   }
 
   function getDomain(url) {
@@ -633,8 +663,20 @@
 
     const name = document.createElement("span");
     name.className = "window-label";
-    name.textContent = `Window ${win.windowIndex}`;
+    name.textContent = getWindowLabel(win.windowId, win.windowIndex);
     el.appendChild(name);
+
+    const editBtn = document.createElement("span");
+    editBtn.className = "window-edit-btn";
+    editBtn.title = "Rename window";
+    editBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M7.5 1.5L9.5 3.5M1 10L1.5 7.5L8.5 0.5L10.5 2.5L3.5 9.5L1 10Z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showRenameWindowUI(win.windowId, win.windowIndex, name);
+    });
+    el.appendChild(editBtn);
 
     const count = document.createElement("span");
     count.className = "group-header-count";
@@ -642,6 +684,47 @@
     el.appendChild(count);
 
     return el;
+  }
+
+  function showRenameWindowUI(windowId, windowIndex, nameEl) {
+    const currentName = windowNames.get(windowId) || "";
+    const input = document.createElement("input");
+    input.className = "window-rename-input";
+    input.type = "text";
+    input.value = currentName;
+    input.placeholder = `Window ${windowIndex}`;
+    nameEl.replaceWith(input);
+
+    requestAnimationFrame(() => {
+      input.focus();
+      input.select();
+    });
+
+    function commit() {
+      const newName = input.value.trim();
+      if (newName) {
+        windowNames.set(windowId, newName);
+      } else {
+        windowNames.delete(windowId);
+      }
+      saveWindowNames();
+      rebuildDisplay();
+    }
+
+    function cancel() {
+      const restored = document.createElement("span");
+      restored.className = "window-label";
+      restored.textContent = getWindowLabel(windowId, windowIndex);
+      input.replaceWith(restored);
+    }
+
+    input.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter") { e.preventDefault(); commit(); }
+      if (e.key === "Escape") { e.preventDefault(); cancel(); }
+    });
+
+    input.addEventListener("blur", () => commit());
   }
 
   // ── Sidebar ───────────────────────────────────────────
