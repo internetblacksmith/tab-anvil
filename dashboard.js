@@ -35,6 +35,7 @@
   let activeSort = "position";
   let activeGroupFilter = null; // null = all, groupId or "ungrouped"
   let collapsedGroups = new Set();
+  let flattenWindows = false; // "All windows" checkbox
 
   // Debounce/coalesce state
   let searchTimer = null;
@@ -326,24 +327,32 @@
 
   function getSortedTabs(tabs) {
     const sorted = [...tabs];
-    switch (activeSort) {
-      case "domain":
-        sorted.sort((a, b) => getDomain(a.url).localeCompare(getDomain(b.url)));
-        break;
-      case "title":
-        sorted.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-        break;
-      case "lastAccessed":
-        sorted.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
-        break;
-      case "position":
-      default:
-        sorted.sort((a, b) => {
-          if (a.windowId !== b.windowId) return a.windowId - b.windowId;
-          return a.index - b.index;
-        });
-        break;
+
+    const comparator = (() => {
+      switch (activeSort) {
+        case "domain":
+          return (a, b) => getDomain(a.url).localeCompare(getDomain(b.url));
+        case "title":
+          return (a, b) => (a.title || "").localeCompare(b.title || "");
+        case "lastAccessed":
+          return (a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0);
+        case "position":
+        default:
+          return (a, b) => a.index - b.index;
+      }
+    })();
+
+    if (flattenWindows) {
+      // Sort all tabs globally
+      sorted.sort(comparator);
+    } else {
+      // Sort within each window, windows ordered by windowId
+      sorted.sort((a, b) => {
+        if (a.windowId !== b.windowId) return a.windowId - b.windowId;
+        return comparator(a, b);
+      });
     }
+
     return sorted;
   }
 
@@ -363,13 +372,13 @@
     const sorted = getSortedTabs(filtered);
     const rows = [];
 
-    const showGroupHeaders = activeSort === "position" && !searchQuery && activeFilter !== "duplicates";
+    const showGroupHeaders = activeSort === "position" && !searchQuery && activeFilter !== "duplicates" && !flattenWindows;
     let currentGroupId = null;
     let currentWindowId = null;
 
     for (const tab of sorted) {
-      // Window header
-      if (tab.windowId !== currentWindowId) {
+      // Window headers (only when not flattened)
+      if (!flattenWindows && tab.windowId !== currentWindowId) {
         currentWindowId = tab.windowId;
         currentGroupId = null;
         const windowIndex = [...allWindows.keys()].indexOf(tab.windowId) + 1;
@@ -381,7 +390,7 @@
         });
       }
 
-      // Group headers only in position sort without search
+      // Group headers only in position sort without search and not flattened
       if (showGroupHeaders) {
         const gid = (tab.groupId && tab.groupId !== -1) ? tab.groupId : null;
         if (gid !== currentGroupId) {
@@ -539,8 +548,8 @@
     }
     el.appendChild(domain);
 
-    // Window badge (only when not in position sort, since window headers handle it)
-    if (allWindows.size > 1 && activeSort !== "position") {
+    // Window badge (when flattened, since window headers aren't shown)
+    if (allWindows.size > 1 && flattenWindows) {
       const wBadge = document.createElement("span");
       wBadge.className = "tab-window-badge";
       wBadge.textContent = `W${[...allWindows.keys()].indexOf(tab.windowId) + 1}`;
@@ -1337,6 +1346,13 @@
     // Filter chips
     document.querySelectorAll(".chip").forEach(btn => {
       btn.addEventListener("click", () => setFilter(btn.dataset.filter));
+    });
+
+    // All windows checkbox
+    $("#all-windows-checkbox").addEventListener("change", (e) => {
+      flattenWindows = e.target.checked;
+      _filteredCache = null;
+      rebuildDisplay();
     });
 
     // Scroll handler for virtual scroller

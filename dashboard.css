@@ -205,8 +205,22 @@ kbd {
   border-bottom-color: var(--accent);
 }
 
-.tab-count {
+.all-windows-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
   margin-left: auto;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.all-windows-toggle input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tab-count {
   font-family: monospace;
   flex-shrink: 0;
 }
