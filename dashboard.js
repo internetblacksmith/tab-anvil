@@ -400,6 +400,7 @@
     el.appendChild(dot);
 
     const name = document.createElement("span");
+    name.className = "group-name";
     name.textContent = group.title || "Unnamed Group";
     el.appendChild(name);
 
@@ -408,6 +409,7 @@
     count.textContent = `(${group.tabCount} tabs)`;
     el.appendChild(count);
 
+    // Single click: collapse/expand
     el.addEventListener("click", () => {
       if (collapsedGroups.has(group.groupId)) {
         collapsedGroups.delete(group.groupId);
@@ -415,6 +417,12 @@
         collapsedGroups.add(group.groupId);
       }
       rebuildDisplay();
+    });
+
+    // Double click: rename group
+    el.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      showRenameGroupUI(group.groupId, group.title, group.color, el, name);
     });
 
     return el;
@@ -960,6 +968,93 @@
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") confirm.click();
       if (e.key === "Escape") overlay.remove();
+    });
+  }
+
+  // ── Rename Group (inline) ──────────────────────────────
+
+  function showRenameGroupUI(groupId, currentTitle, currentColor, headerEl, nameEl) {
+    // Replace the name span with an input field
+    const input = document.createElement("input");
+    input.className = "group-rename-input";
+    input.type = "text";
+    input.value = currentTitle || "";
+    input.placeholder = "Group name...";
+    nameEl.replaceWith(input);
+
+    // Add color swatches next to it
+    const colorPicker = document.createElement("div");
+    colorPicker.className = "group-rename-colors";
+    let selectedColor = currentColor || "blue";
+
+    for (const color of GROUP_COLORS) {
+      const swatch = document.createElement("div");
+      swatch.className = `group-rename-swatch${color === selectedColor ? " selected" : ""}`;
+      swatch.style.background = GROUP_COLOR_HEX[color];
+      swatch.addEventListener("click", (e) => {
+        e.stopPropagation();
+        colorPicker.querySelectorAll(".group-rename-swatch").forEach(s => s.classList.remove("selected"));
+        swatch.classList.add("selected");
+        selectedColor = color;
+      });
+      colorPicker.appendChild(swatch);
+    }
+
+    // Insert color picker after the input
+    input.after(colorPicker);
+
+    // Prevent click from collapsing the group
+    input.addEventListener("click", (e) => e.stopPropagation());
+    colorPicker.addEventListener("click", (e) => e.stopPropagation());
+
+    // Focus and select text
+    requestAnimationFrame(() => {
+      input.focus();
+      input.select();
+    });
+
+    async function commitRename() {
+      const newTitle = input.value.trim();
+      try {
+        await browser.tabGroups.update(groupId, {
+          title: newTitle || "",
+          color: selectedColor
+        });
+      } catch (err) {
+        console.error("Failed to rename group:", err);
+        showToast("Failed to rename group", true);
+      }
+      // Reload to reflect changes
+      await loadAllTabs();
+    }
+
+    function cancelRename() {
+      // Restore original name span
+      colorPicker.remove();
+      const restored = document.createElement("span");
+      restored.className = "group-name";
+      restored.textContent = currentTitle || "Unnamed Group";
+      input.replaceWith(restored);
+    }
+
+    input.addEventListener("keydown", (e) => {
+      e.stopPropagation(); // prevent j/k/d/etc from firing
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitRename();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        cancelRename();
+      }
+    });
+
+    input.addEventListener("blur", () => {
+      // Small delay so color swatch clicks register before blur
+      setTimeout(() => {
+        if (!colorPicker.contains(document.activeElement)) {
+          commitRename();
+        }
+      }, 150);
     });
   }
 
