@@ -323,10 +323,7 @@
     el.appendChild(checkbox);
 
     // Favicon
-    const safeFavicon = tab.favIconUrl
-      && /^https?:\/\//.test(tab.favIconUrl);
-
-    if (safeFavicon) {
+    if (tab.favIconUrl) {
       const img = document.createElement("img");
       img.className = "tab-favicon";
       img.src = tab.favIconUrl;
