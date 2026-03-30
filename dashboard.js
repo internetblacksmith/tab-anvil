@@ -37,6 +37,7 @@
   let collapsedGroups = new Set();
   let flattenWindows = false; // "All windows" checkbox
   let windowNames = new Map(); // windowId -> custom name
+  let collapsedWindows = new Set();
 
   // Debounce/coalesce state
   let searchTimer = null;
@@ -420,6 +421,9 @@
         });
       }
 
+      // Skip tabs in collapsed windows
+      if (!flattenWindows && collapsedWindows.has(tab.windowId)) continue;
+
       // Group headers only in position sort without search and not flattened
       if (showGroupHeaders) {
         const gid = (tab.groupId && tab.groupId !== -1) ? tab.groupId : null;
@@ -649,6 +653,11 @@
     el.dataset.windowId = win.windowId;
     el.dataset.rowIndex = rowIndex;
 
+    const expand = document.createElement("span");
+    expand.className = `group-expand${collapsedWindows.has(win.windowId) ? " collapsed" : ""}`;
+    expand.textContent = "\u25BC";
+    el.appendChild(expand);
+
     const icon = document.createElement("span");
     icon.className = "window-icon";
     // SVG window icon: title bar with three dots + frame
@@ -682,6 +691,15 @@
     count.className = "group-header-count";
     count.textContent = `(${win.tabCount} tabs)`;
     el.appendChild(count);
+
+    el.addEventListener("click", () => {
+      if (collapsedWindows.has(win.windowId)) {
+        collapsedWindows.delete(win.windowId);
+      } else {
+        collapsedWindows.add(win.windowId);
+      }
+      rebuildDisplay();
+    });
 
     return el;
   }
