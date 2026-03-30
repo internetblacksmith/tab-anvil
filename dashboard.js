@@ -97,6 +97,112 @@
 
   // ── Favicon Color Extraction ──────────────────────────
 
+  // Brand colors for well-known domains (takes priority over extraction)
+  const BRAND_COLORS = {
+    // Google
+    "google.com": "66, 133, 244",
+    "youtube.com": "255, 0, 0",
+    "gmail.com": "234, 67, 53",
+    "mail.google.com": "234, 67, 53",
+    "drive.google.com": "66, 133, 244",
+    "docs.google.com": "66, 133, 244",
+    "calendar.google.com": "66, 133, 244",
+    "meet.google.com": "0, 150, 136",
+    "maps.google.com": "52, 168, 83",
+    // Social
+    "twitter.com": "29, 161, 242",
+    "x.com": "29, 161, 242",
+    "facebook.com": "24, 119, 242",
+    "instagram.com": "225, 48, 108",
+    "linkedin.com": "0, 119, 181",
+    "reddit.com": "255, 69, 0",
+    "tiktok.com": "255, 0, 80",
+    "pinterest.com": "230, 0, 35",
+    "mastodon.social": "99, 100, 255",
+    "threads.net": "0, 0, 0",
+    "bsky.app": "32, 139, 254",
+    // Dev
+    "github.com": "110, 84, 148",
+    "gitlab.com": "252, 109, 38",
+    "stackoverflow.com": "244, 128, 36",
+    "codepen.io": "71, 207, 115",
+    "dev.to": "59, 73, 223",
+    "npmjs.com": "203, 56, 55",
+    "pypi.org": "0, 105, 170",
+    "crates.io": "243, 131, 30",
+    "hub.docker.com": "29, 99, 237",
+    "vercel.com": "0, 0, 0",
+    "netlify.com": "0, 173, 181",
+    "heroku.com": "121, 71, 185",
+    // Docs & reference
+    "developer.mozilla.org": "83, 100, 255",
+    "w3.org": "0, 91, 161",
+    "caniuse.com": "253, 215, 2",
+    "MDN": "83, 100, 255",
+    // Microsoft
+    "microsoft.com": "0, 120, 212",
+    "azure.com": "0, 120, 212",
+    "office.com": "235, 59, 0",
+    "outlook.com": "0, 120, 212",
+    "outlook.live.com": "0, 120, 212",
+    "live.com": "0, 120, 212",
+    "teams.microsoft.com": "82, 79, 161",
+    // Apple
+    "apple.com": "0, 0, 0",
+    "icloud.com": "52, 170, 220",
+    // Amazon
+    "amazon.com": "255, 153, 0",
+    "amazon.co.uk": "255, 153, 0",
+    "amazon.de": "255, 153, 0",
+    "aws.amazon.com": "255, 153, 0",
+    // Media & entertainment
+    "netflix.com": "229, 9, 20",
+    "spotify.com": "30, 215, 96",
+    "twitch.tv": "145, 70, 255",
+    "soundcloud.com": "255, 85, 0",
+    "vimeo.com": "26, 183, 234",
+    "medium.com": "0, 0, 0",
+    "substack.com": "255, 102, 0",
+    // Communication
+    "slack.com": "74, 21, 75",
+    "discord.com": "88, 101, 242",
+    "telegram.org": "38, 166, 222",
+    "web.whatsapp.com": "37, 211, 102",
+    "zoom.us": "45, 140, 255",
+    // Productivity
+    "notion.so": "0, 0, 0",
+    "figma.com": "162, 89, 255",
+    "miro.com": "255, 208, 0",
+    "trello.com": "0, 121, 191",
+    "asana.com": "246, 114, 128",
+    "linear.app": "92, 107, 255",
+    "jira.atlassian.com": "0, 82, 204",
+    "confluence.atlassian.com": "0, 82, 204",
+    // Shopping
+    "ebay.com": "230, 0, 0",
+    "etsy.com": "245, 100, 40",
+    "shopify.com": "150, 191, 72",
+    // News & info
+    "wikipedia.org": "0, 0, 0",
+    "en.wikipedia.org": "0, 0, 0",
+    "bbc.com": "187, 25, 25",
+    "bbc.co.uk": "187, 25, 25",
+    "nytimes.com": "0, 0, 0",
+    "theguardian.com": "5, 41, 98",
+    "reuters.com": "255, 140, 0",
+    "hn.algolia.com": "255, 102, 0",
+    "news.ycombinator.com": "255, 102, 0",
+    // Finance
+    "paypal.com": "0, 48, 135",
+    "stripe.com": "99, 91, 255",
+    // AI
+    "chat.openai.com": "16, 163, 127",
+    "chatgpt.com": "16, 163, 127",
+    "claude.ai": "204, 150, 94",
+    "anthropic.com": "204, 150, 94",
+    "huggingface.co": "255, 213, 0",
+  };
+
   const domainColorCache = new Map(); // domain -> "r, g, b" or null
   const colorExtractCanvas = document.createElement("canvas");
   const colorExtractCtx = colorExtractCanvas.getContext("2d", { willReadFrequently: true });
@@ -105,6 +211,14 @@
 
   function extractFaviconColor(faviconUrl, domain) {
     if (domainColorCache.has(domain)) return domainColorCache.get(domain);
+
+    // Check brand colors first (also match parent domain)
+    const brandColor = BRAND_COLORS[domain]
+      || BRAND_COLORS[domain.split(".").slice(-2).join(".")];
+    if (brandColor) {
+      domainColorCache.set(domain, brandColor);
+      return brandColor;
+    }
 
     // Mark as pending to avoid duplicate extractions
     domainColorCache.set(domain, null);
