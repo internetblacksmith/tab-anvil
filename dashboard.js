@@ -607,6 +607,15 @@
     // Double-click to activate tab
     el.addEventListener("dblclick", () => activateTab(tab.id, tab.windowId));
 
+    // Right-click context menu
+    el.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      const tabIds = selectedIds.size > 0 && selectedIds.has(tab.id)
+        ? [...selectedIds]
+        : [tab.id];
+      showTabContextMenu(e.clientX, e.clientY, tabIds, tab.windowId);
+    });
+
     return el;
   }
 
@@ -1361,6 +1370,76 @@
       if (e.key === "Enter") save.click();
       if (e.key === "Escape") overlay.remove();
     });
+  }
+
+  // ── Tab Context Menu ───────────────────────────────────
+
+  function showTabContextMenu(x, y, tabIds, currentWindowId) {
+    closeContextMenu();
+
+    const menu = document.createElement("div");
+    menu.className = "context-menu";
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    const label = document.createElement("div");
+    label.className = "context-menu-label";
+    label.textContent = tabIds.length > 1 ? `Move ${tabIds.length} tabs to` : "Move to";
+    menu.appendChild(label);
+
+    // New window
+    const newWinBtn = document.createElement("button");
+    newWinBtn.className = "context-menu-item new-window";
+    newWinBtn.textContent = "+ New Window";
+    newWinBtn.addEventListener("click", () => {
+      closeContextMenu();
+      moveTabsToWindow(tabIds, "new");
+    });
+    menu.appendChild(newWinBtn);
+
+    // Existing windows (skip the tab's current window)
+    let idx = 1;
+    for (const [windowId] of allWindows) {
+      const windowIndex = idx++;
+      if (windowId === currentWindowId && tabIds.length === 1) continue;
+      const windowTabs = allTabs.filter(t => t.windowId === windowId);
+      const btn = document.createElement("button");
+      btn.className = "context-menu-item";
+      btn.textContent = `${getWindowLabel(windowId, windowIndex)} (${windowTabs.length} tabs)`;
+      btn.addEventListener("click", () => {
+        closeContextMenu();
+        moveTabsToWindow(tabIds, windowId);
+      });
+      menu.appendChild(btn);
+    }
+
+    document.body.appendChild(menu);
+
+    // Adjust position if menu goes off-screen
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) menu.style.left = `${x - rect.width}px`;
+    if (rect.bottom > window.innerHeight) menu.style.top = `${y - rect.height}px`;
+
+    // Close on outside click or Escape
+    const closeHandler = (e) => {
+      if (!menu.contains(e.target)) {
+        closeContextMenu();
+        document.removeEventListener("click", closeHandler);
+      }
+    };
+    setTimeout(() => document.addEventListener("click", closeHandler), 0);
+
+    const keyHandler = (e) => {
+      if (e.key === "Escape") {
+        closeContextMenu();
+        document.removeEventListener("keydown", keyHandler);
+      }
+    };
+    document.addEventListener("keydown", keyHandler);
+  }
+
+  function closeContextMenu() {
+    document.querySelector(".context-menu")?.remove();
   }
 
   // ── Move to Window Dropdown ───────────────────────────
