@@ -1383,6 +1383,46 @@
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
 
+    // Go to tab (single tab only)
+    if (tabIds.length === 1) {
+      const goBtn = document.createElement("button");
+      goBtn.className = "context-menu-item";
+      goBtn.textContent = "Go to tab";
+      goBtn.addEventListener("click", () => {
+        closeContextMenu();
+        activateTab(tabIds[0], currentWindowId);
+      });
+      menu.appendChild(goBtn);
+
+      // Close tab
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "context-menu-item context-menu-danger";
+      closeBtn.textContent = "Close tab";
+      closeBtn.addEventListener("click", () => {
+        closeContextMenu();
+        closeTab(tabIds[0]);
+      });
+      menu.appendChild(closeBtn);
+
+      const sep = document.createElement("div");
+      sep.className = "context-menu-separator";
+      menu.appendChild(sep);
+    } else {
+      // Close N tabs
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "context-menu-item context-menu-danger";
+      closeBtn.textContent = `Close ${tabIds.length} tabs`;
+      closeBtn.addEventListener("click", () => {
+        closeContextMenu();
+        closeTabs(new Set(tabIds));
+      });
+      menu.appendChild(closeBtn);
+
+      const sep = document.createElement("div");
+      sep.className = "context-menu-separator";
+      menu.appendChild(sep);
+    }
+
     const label = document.createElement("div");
     label.className = "context-menu-label";
     label.textContent = tabIds.length > 1 ? `Move ${tabIds.length} tabs to` : "Move to";

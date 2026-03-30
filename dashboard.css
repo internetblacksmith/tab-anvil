@@ -531,6 +531,13 @@ kbd {
 
 .context-menu-item:hover { background: var(--bg-tertiary); }
 .context-menu-item.new-window { color: var(--accent); }
+.context-menu-item.context-menu-danger { color: var(--danger); }
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--bg-tertiary);
+  margin: 4px 0;
+}
 
 /* ── Move-to-window dropdown ───────────────────────────── */
 .move-dropdown {
