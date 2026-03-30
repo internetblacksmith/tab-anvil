@@ -95,6 +95,71 @@
     }
   }
 
+  // ── Favicon Color Extraction ──────────────────────────
+
+  const domainColorCache = new Map(); // domain -> "r, g, b" or null
+  const colorExtractCanvas = document.createElement("canvas");
+  const colorExtractCtx = colorExtractCanvas.getContext("2d", { willReadFrequently: true });
+  colorExtractCanvas.width = 16;
+  colorExtractCanvas.height = 16;
+
+  function extractFaviconColor(faviconUrl, domain) {
+    if (domainColorCache.has(domain)) return domainColorCache.get(domain);
+
+    // Mark as pending to avoid duplicate extractions
+    domainColorCache.set(domain, null);
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        colorExtractCtx.clearRect(0, 0, 16, 16);
+        colorExtractCtx.drawImage(img, 0, 0, 16, 16);
+        const data = colorExtractCtx.getImageData(0, 0, 16, 16).data;
+
+        // Find the most saturated, non-gray color
+        let bestR = 0, bestG = 0, bestB = 0, bestScore = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+          if (a < 128) continue; // skip transparent pixels
+
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const saturation = max === 0 ? 0 : (max - min) / max;
+          const brightness = max / 255;
+
+          // Score: prefer saturated, mid-brightness colors
+          const score = saturation * 2 + brightness * 0.5;
+          if (score > bestScore && saturation > 0.1) {
+            bestScore = score;
+            bestR = r; bestG = g; bestB = b;
+          }
+        }
+
+        if (bestScore > 0) {
+          domainColorCache.set(domain, `${bestR}, ${bestG}, ${bestB}`);
+          applyDomainColors(domain);
+        }
+      } catch {
+        // Canvas tainted by cross-origin image, ignore
+      }
+    };
+    img.src = faviconUrl;
+    return null;
+  }
+
+  function applyDomainColors(domain) {
+    // Update all visible domain badges for this domain
+    const badges = viewportEl.querySelectorAll(`.tab-domain[data-domain="${CSS.escape(domain)}"]`);
+    const rgb = domainColorCache.get(domain);
+    if (!rgb) return;
+    for (const badge of badges) {
+      badge.style.background = `rgba(${rgb}, 0.15)`;
+      badge.style.color = `rgb(${rgb})`;
+    }
+  }
+
   // ── Memoized Derived Views ────────────────────────────
 
   let _filteredCache = null;
@@ -343,10 +408,21 @@
     title.textContent = tab.title || tab.url || "Untitled";
     el.appendChild(title);
 
-    // Domain badge
+    // Domain badge (colored by favicon)
+    const domainName = getDomain(tab.url);
     const domain = document.createElement("span");
     domain.className = "tab-domain";
-    domain.textContent = getDomain(tab.url);
+    domain.textContent = domainName;
+    domain.dataset.domain = domainName;
+
+    // Apply cached color or trigger extraction
+    const cachedColor = domainColorCache.get(domainName);
+    if (cachedColor) {
+      domain.style.background = `rgba(${cachedColor}, 0.15)`;
+      domain.style.color = `rgb(${cachedColor})`;
+    } else if (tab.favIconUrl) {
+      extractFaviconColor(tab.favIconUrl, domainName);
+    }
     el.appendChild(domain);
 
     // Window badge (only when not in position sort, since window headers handle it)
